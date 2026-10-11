@@ -1,14 +1,14 @@
 # Chapter 7: Scheduling — Introduction
 
-## Model and method
+## Setup
 
-All jobs arrive at time 0, use only the CPU, and have known lengths. There is no context-switch cost. Job IDs follow the input list; ties keep their original order. Values use simulator time units.
+All jobs arrive at time 0 and have known CPU lengths. There is no I/O or switching cost. Job IDs start at 0 and follow the input order. Jobs of equal length keep that order. Times are in simulator units.
 
 - Response = first start − arrival.
 - Turnaround = completion − arrival.
 - Wait = turnaround − CPU length.
 
-The following predictions were calculated before any run with -c. The simulator was first used without that flag. Verification and comparisons will be appended after the predictions are saved.
+The calculations are below. The simulator results and explanations follow in the next section.
 
 ## Q1 — Three jobs of length 200
 
@@ -62,9 +62,9 @@ The unequal-job means are exactly 1397/3 for turnaround and 797/3 for wait. RR i
 
 ## Q4 — Equal turnaround under SJF and FIFO
 
-**Prediction.** The averages match when the FIFO list is already in nondecreasing length order. Equal-length jobs are one example. A longer job before a shorter one raises the total completion time: exchanging adjacent lengths a > b reduces it by a − b. For positive lengths, an input containing such an inversion therefore has a larger average turnaround under FIFO.
+**Prediction.** The averages match when FIFO already lists the jobs from shortest to longest. Equal-length jobs also work. If a longer job of length a comes just before a shorter job of length b, swapping them reduces total turnaround by a − b. For positive lengths, any such pair makes FIFO worse than SJF.
 
-The lists below show metrics in original job-ID order. Tied jobs retain that order in these checks; changing tie order can exchange individual completion times without changing the average.
+The tables use the original job IDs. Equal-length jobs keep their order here. Swapping them can change individual finish times but leaves the average unchanged.
 
 | Lengths | Policy | Responses by job | Turnarounds by job | Avg response | Avg turnaround |
 | --- | --- | --- | --- | ---: | ---: |
@@ -77,9 +77,9 @@ The final pair shows the convoy effect: short jobs wait behind the long job unde
 
 ## Q5 — Equal response under SJF and RR
 
-**Prediction.** A sufficient condition is that the initial RR queue follows the SJF order, and q covers every job except the final one. Every earlier job then finishes before the next job first starts. The final job can be longer than q: its later slices cannot delay another first response. For equal-length jobs, q at least the common length is sufficient. A single job always has response 0.
+**Prediction.** One way to get the same response for every job is to list the RR queue in shortest-job order and make q long enough for every job before the last one to finish in one turn. The final job can be longer than q because the other jobs have already finished. For equal-length jobs, q at least that length works. A single job always has response 0.
 
-For 10,20,40, q=20 is sufficient, even though 40 exceeds q. With q=5, all jobs respond sooner.
+For 10,20,40, q=20 is sufficient, even though 40 exceeds q. With q=5, jobs 1 and 2 respond sooner.
 
 | Lengths | Policy | Responses by job | Turnarounds by job | Avg response | Avg turnaround |
 | --- | --- | --- | --- | ---: | ---: |
@@ -89,11 +89,11 @@ For 10,20,40, q=20 is sufficient, even though 40 exceeds q. With q=5, all jobs r
 | 30,10,20 | SJF | 30,0,10 | 60,10,30 | 13.33 | 33.33 |
 | 30,10,20 | RR q=15 | 0,15,25 | 55,25,60 | 13.33 | 46.67 |
 
-The last two rows have equal average response but different individual responses. Matching averages alone does not establish identical scheduling or per-job response times.
+The last two rows have the same average response, but the individual responses differ. The averages can match even when the schedules do not.
 
 ## Q6 — SJF as job lengths increase
 
-**Prediction.** For three equal jobs of length L, responses are 0,L,2L, so the mean is L. Completions are L,2L,3L, so mean turnaround is 2L. Scaling all lengths increases response linearly.
+**Prediction.** For three equal jobs of length L, responses are 0,L,2L, so the mean is L. Completions are L,2L,3L, so mean turnaround is 2L. Doubling all lengths doubles the response times.
 
 | Lengths | SJF responses | SJF turnarounds | Avg response | Avg turnaround |
 | --- | --- | --- | ---: | ---: |
@@ -106,15 +106,15 @@ Response depends on earlier jobs. Extending only the last job need not change an
 
 ## Q7 — RR as the quantum increases
 
-**Prediction.** In the initial queue order, zero-based job j first runs after the first slices of all earlier jobs:
+**Prediction.** Job IDs start at 0. Job j first runs after each earlier job takes one turn:
 
 R_j = sum(i < j) min(L_i, q).
 
-Thus R_j <= j*q, and the worst first response among N jobs is at most (N−1)*q. The bound is attained when all N−1 earlier jobs have lengths at least q. Averaging the bounds gives mean response <= q*(N−1)/2.
+Each earlier job runs for at most q, so R_j <= j*q. With N jobs, worst response is at most (N−1)*q. This value is reached when all N−1 earlier jobs are at least q long. Average response is at most q*(N−1)/2.
 
-These bounds assume a fixed set of ready jobs, arrival at time 0, no I/O or later arrivals, and zero switch cost. They concern first response, not total waiting or completion.
+This assumes all jobs are ready at time 0, with no I/O, new arrivals, or switching cost. It describes the first run of each job.
 
-For three length-200 jobs, mean response is min(q,200). It rises with q, then saturates at 200. When q divides 200 and q <= 200, final completions are 600−2q,600−q,600, so mean turnaround is 600−q. For q >= 200, RR runs each job to completion and behaves like FIFO.
+For three length-200 jobs, mean response is min(q,200). It rises with q, then stays at 200. When q divides 200 and q <= 200, final completions are 600−2q,600−q,600, so mean turnaround is 600−q. For q >= 200, RR runs each job to completion and behaves like FIFO.
 
 | RR q | Responses | Turnarounds | Avg response | Avg turnaround |
 | ---: | --- | --- | ---: | ---: |
@@ -127,35 +127,36 @@ For three length-200 jobs, mean response is min(q,200). It rises with q, then sa
 
 For N=5, lengths 1000,1000,1000,1000,1000 and q=7, responses are 0,7,14,21,28. Worst response is (5−1)*7=28 and the mean is 14. After 142 full rounds, time is 4970; each job has 6 units left. Completions are 4976,4982,4988,4994,5000 and the mean is 4988.
 
-
 # Verification and discussion
 
-The assignment guide ends without the question text. The scope is the seven homework questions at the end of the official OSTEP Chapter 7, as confirmed for this assignment.
+The results match the calculations above. All jobs arrive at time 0, and the simulator has no I/O or switching cost. Job IDs start at 0. Response time is how long a job waits before its first run. Turnaround time is how long it takes to finish. Total wait time is turnaround minus the job's length.
 
-All jobs in these cases arrive at time 0. There is no I/O, idle time, or context-switch cost. Job IDs follow the input order. Response is the first start time, turnaround is the completion time, and wait is turnaround minus job length. FIFO and SJF run each job to completion, so their response and wait are equal. RR can make a job wait again after its first run.
-
-The predictions above were saved before the computed runs. Each case was previewed without `-c`, then checked with `-c` and seed 1234. The 28 output files and `data/run-manifest.json` record the cases and commands. The checked per-job metrics and averages agree with the predictions. Values such as `400/3` appear as `133.33` because the simulator prints two decimal places; this is rounding, not a scheduling discrepancy.
+The runs use seed 1234. The full output is in [data/](data/), and the commands are in [run-manifest.json](data/run-manifest.json). The simulator rounds to two decimal places, so 400/3 is shown as 133.33.
 
 ## Q1: Three jobs of length 200
 
-FIFO and SJF both run jobs 0, 1, and 2. Their responses are 0, 200, and 400, and their turnarounds are 200, 400, and 600. Both computed averages match the prediction: response 200.00, turnaround 400.00, and wait 200.00. Equal lengths give SJF no shorter job to move ahead.
+FIFO and SJF give the same result. All three jobs have the same length, so both run job 0, then job 1, then job 2. Their response times are 0, 200, and 400. They finish at 200, 400, and 600.
+
+The averages are 200.00 for response, 400.00 for turnaround, and 200.00 for wait, as calculated above.
 
 ## Q2: Lengths 100, 200, and 300
 
-The input already follows SJF order. Both policies give responses 0, 100, and 300, and turnarounds 100, 300, and 600. The computed averages are response 133.33, turnaround 333.33, and wait 133.33, matching the exact predicted values `400/3`, `1000/3`, and `400/3`. Different lengths alone do not make SJF better than FIFO when FIFO is already sorted.
+The jobs are already listed from shortest to longest. SJF therefore runs them in the same order as FIFO. Their response times are 0, 100, and 300, and they finish at 100, 300, and 600.
+
+Both policies give average response 133.33, average turnaround 333.33, and average wait 133.33. SJF does not improve this example because FIFO already puts the short jobs first.
 
 ## Q3: RR with quantum 1
 
-Both workloads have first starts at 0, 1, and 2, so their average response is 1.00.
+With a quantum of 1, the jobs first run at 0, 1, and 2. Both workloads have average response 1.00.
 
-| Lengths | Completion times by job ID | Avg response | Avg turnaround | Avg wait |
+| Lengths | Finish times by job ID | Avg response | Avg turnaround | Avg wait |
 |---|---|---:|---:|---:|
 | 200,200,200 | 598,599,600 | 1.00 | 599.00 | 399.00 |
 | 100,200,300 | 298,499,600 | 1.00 | 465.67 | 265.67 |
 
-The output agrees with both predictions. RR starts every job quickly, but delays completion by sharing the CPU. For equal lengths, average turnaround rises from 400 to 599. For unequal lengths, it rises from `1000/3` to `1397/3`. Total work remains 600 in each case.
+RR lets every job start sooner, but each job has to wait between turns. Average turnaround goes from 400 to 599 for the equal jobs, and from 333.33 to 465.67 for the unequal jobs. Both workloads still take 600 time units to finish all the work.
 
-## Q4: Equal turnaround under SJF and FIFO
+## Q4: When do FIFO and SJF have the same turnaround?
 
 | Lengths | Policy | Avg response | Avg turnaround | Avg wait |
 |---|---|---:|---:|---:|
@@ -164,11 +165,13 @@ The output agrees with both predictions. RR starts every job quickly, but delays
 | 100,10,10 | FIFO | 70.00 | 110.00 | 70.00 |
 | 100,10,10 | SJF | 10.00 | 50.00 | 10.00 |
 
-These results match the predictions. Under the stated assumptions, positive job lengths give the same average turnaround exactly when FIFO is in nondecreasing length order, including ties. Swapping adjacent lengths `a > b` reduces total turnaround by `a - b`; any inversion therefore makes FIFO worse. Equal-length ties can exchange individual completion times without changing the average. The last case shows the convoy effect: FIFO makes both short jobs wait behind the length-100 job.
+They have the same average turnaround when FIFO already lists the jobs from shortest to longest. Equal lengths also work. If a longer job of length a comes just before a shorter job of length b, swapping them reduces total turnaround by a-b. For positive lengths, any such pair makes FIFO's average worse than SJF's. Swapping equal-length jobs leaves the average unchanged, although individual finish times can differ.
 
-## Q5: Equal response under SJF and RR
+The 100,10,10 example shows why the order matters. Under FIFO, both short jobs wait for the long job. SJF finishes the short jobs first, reducing average turnaround from 110 to 50.
 
-A sufficient condition for the same response for every job is that the RR queue follows SJF order and its quantum covers every job before the final job. Earlier jobs then finish before the next job first runs. The final job can exceed the quantum because all other jobs have finished before its first start.
+## Q5: When do SJF and RR have the same response?
+
+One way to get the same response for every job is to put the RR queue in shortest-job order and choose a quantum long enough for each job before the last one to finish in one turn. Then each next job starts at the same time as in SJF. The final job can be longer than the quantum because the other jobs have already finished.
 
 | Lengths | Policy / quantum | Responses by job ID | Avg response | Avg turnaround | Avg wait |
 |---|---|---|---:|---:|---:|
@@ -178,9 +181,11 @@ A sufficient condition for the same response for every job is that the RR queue 
 | 30,10,20 | SJF | 30,0,10 | 13.33 | 33.33 | 13.33 |
 | 30,10,20 | RR / 15 | 0,15,25 | 13.33 | 46.67 | 26.67 |
 
-All predicted per-job values match the output. Quantum 20 is sufficient for 10,20,40 even though the longest job is 40. Quantum 5 gives faster first responses but longer average turnaround. In the unsorted case, the two averages happen to be `40/3`, while every job has a different response under the two policies. Equality of averages is a weaker condition than equality for each job.
+For 10,20,40, quantum 20 is enough to match SJF. Quantum 5 starts the jobs sooner but makes them finish later on average.
 
-## Q6: Increasing job lengths under SJF
+The 30,10,20 example gives the same average response, 13.33, under SJF and RR with quantum 15. However, the response times of individual jobs are different. The averages can match even when the schedules do not.
+
+## Q6: What happens when SJF job lengths increase?
 
 | Lengths | Avg response | Avg turnaround | Avg wait |
 |---|---:|---:|---:|
@@ -189,9 +194,11 @@ All predicted per-job values match the output. Quantum 20 is sufficient for 10,2
 | 40,40,40 | 40.00 | 80.00 | 40.00 |
 | 10,10,40 | 10.00 | 30.00 | 10.00 |
 
-The results match the predictions. For three equal jobs of length `L`, responses are `0,L,2L`, so average response is `L`. Scaling all lengths scales all response times by the same factor. More generally, for sorted lengths `L_0,...,L_(N-1)`, average response is `sum((N-1-i)*L_i)/N`. It depends on earlier jobs. Extending only the final job in 10,10,10 to 40 leaves all first starts unchanged, although average turnaround rises to 30.
+Longer jobs make later jobs wait longer. For three equal jobs of length L, response times are 0,L,2L, so average response is L. Doubling all job lengths doubles the response times.
 
-## Q7: Increasing the RR quantum and the worst response
+For N jobs sorted by length, the average is sum((N-1-i)*L_i)/N. Each job's response depends on the jobs before it. Increasing only the final job from 10 to 40 leaves the first starts unchanged, so average response stays at 10. Its later finish raises average turnaround to 30.
+
+## Q7: What happens when the RR quantum increases?
 
 | Lengths | Quantum | Avg response | Avg turnaround | Avg wait |
 |---|---:|---:|---:|---:|
@@ -203,17 +210,17 @@ The results match the predictions. For three equal jobs of length `L`, responses
 | 200,200,200 | 300 | 200.00 | 400.00 | 200.00 |
 | 1000,1000,1000,1000,1000 | 7 | 14.00 | 4988.00 | 3988.00 |
 
-The results match all predicted first starts and completions. For a fixed initial queue, job `j` first runs after earlier jobs each take one slice:
+With a larger quantum, later jobs may wait longer for their first turn. For the three length-200 jobs, average response is min(q,200). It rises until q reaches 200, then stays at 200. When every job fits in one turn, RR runs like FIFO.
 
-`R_j = sum(min(L_i,q), for i < j)`.
+Job j first runs after each earlier job has taken one turn:
 
-Thus `R_j <= j*q`, and the worst response among `N` jobs is at most `(N-1)*q`. The bound is attained for the last job when every earlier job has length at least `q`. The corresponding average bound is `q*(N-1)/2`. These bounds concern first response for jobs all ready at time 0, with no extra arrivals or switching cost.
+R_j = sum(min(L_i,q), for i < j).
 
-For three length-200 jobs, average response is `min(q,200)`: it increases with the quantum until 200, then stays at 200. Once each job fits in one slice, RR has FIFO behavior. For `q <= 200` that divides 200, average turnaround is `600-q`. This completion formula must not be applied to a quantum that does not divide the job length.
+With N jobs ready at time 0, the last job waits for at most N-1 slices. The worst response is therefore at most (N-1)q. This value is reached when every earlier job is at least q long. The average response is at most q(N-1)/2. These bounds assume no new arrivals or switching cost.
 
-For `N` equal jobs of length `L` and any positive quantum, let `k = ceil(L/q)` and `r = L-(k-1)*q`, the positive length of the final slice. After `k-1` full rounds, completion of job `j` is `N*(k-1)*q+(j+1)*r`. Average turnaround is therefore `N*L-(N-1)*r/2`. When `q` divides `L`, `r=q`; when `q >= L`, `r=L`, giving the FIFO average `L*(N+1)/2`.
+For the equal length-200 jobs, average turnaround is 600-q when q divides 200 and q <= 200. If q does not divide the length, the last turn is shorter. For N equal jobs of length L, let k=ceil(L/q) and r=L-(k-1)q. Here r is the length of the final turn. Job j finishes at N(k-1)q+(j+1)r, so average turnaround is NL-(N-1)r/2. When q divides L, r=q; when q >= L, r=L and the average is L(N+1)/2.
 
-The five-job check uses `L=1000`, `q=7`, `k=143`, and `r=6`. Responses are 0,7,14,21,28, so the maximum is `(5-1)*7=28` and the average is 14. Completions are 4976,4982,4988,4994,5000. Their average, 4988, confirms the final partial-slice calculation.
+For five length-1000 jobs with q=7, the final turn is 6 time units long. The first starts are 0,7,14,21,28, giving worst response 28 and average response 14. The finish times are 4976,4982,4988,4994,5000, with average turnaround 4988. This agrees with the calculation using the shorter final turn.
 
 ## Output index
 

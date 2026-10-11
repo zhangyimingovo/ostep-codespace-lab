@@ -1,52 +1,44 @@
 # Chapter 7: CPU Scheduling
 
-This assignment covers the seven homework questions in [OSTEP Chapter 7](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf). The guide does not include the question bodies, so the official chapter supplies Q1-Q7.
+This exercise compares FIFO, SJF, and Round Robin using the homework questions in [OSTEP Chapter 7](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf).
 
-## Results
+The calculations and explanations are in [analysis.md](analysis.md). The 28 simulator outputs are in [data/](data/), and [run-manifest.json](data/run-manifest.json) lists the commands and results.
 
-[analysis.md](analysis.md) contains the manual predictions followed by the computed results and discussion. [data/](data/) holds 28 unedited simulator outputs. [run-manifest.json](data/run-manifest.json) records every workload, command, exit code, output hash, and checked metric.
+## Main results
 
-All 28 cases agree with the predicted per-job response, turnaround, and wait times, and their averages, within the simulator's two-decimal display precision.
+- FIFO and SJF give the same result for 200,200,200 and 100,200,300. For 100,10,10, SJF reduces average turnaround from 110 to 50 by running the short jobs first.
+- RR with quantum 1 gives average response 1 for both original workloads. Average turnaround is higher: 599 for equal lengths and 465.67 for unequal lengths.
+- Increasing all job lengths makes response under SJF increase. Increasing only the final job does not change the first starts.
+- A larger RR quantum can increase the wait for the first turn. With N jobs ready at time 0, worst response is at most (N-1)q.
 
-- FIFO and SJF agree when FIFO already follows shortest-job order. The unsorted 100,10,10 example reduces average turnaround from 110 to 50 under SJF.
-- RR with quantum 1 reduces average response to 1 for both original workloads, but increases average turnaround to 599 and 465.67.
-- SJF response depends on earlier jobs. Scaling every length scales response; extending only the final job leaves response unchanged.
-- RR's worst initial response is at most (N-1)q under the stated model. Larger quanta increase initial response until earlier jobs fit in one slice.
+The simulator results agree with the calculations. All jobs arrive at time 0, and there is no I/O or switching cost. Times are in simulator units.
 
-## Method and environment
+## Running the examples
 
-The runs used the existing GitHub Codespaces environment in /workspaces/ostep-codespace-lab, Python 3.12.3, and ext/ostep-homework/cpu-sched/scheduler.py. The devcontainer config specifies bash .devcontainer/setup.sh as its startup command. Python and simulator help were checked directly.
+The examples use Python 3.12.3 in GitHub Codespaces. Run these commands from the repository root. Seed 1234 is used throughout.
 
-All predictions were saved before any computed run. Their snapshot was recorded at 2026-10-11T02:44:45.941954+00:00, with SHA256 bdabfba044f732406d8f91e3f1af3c8fa45cdb4920226c2b72590ae613ced199. The manifest records that receipt and the later verification times. Each of the 28 cases was previewed without -c before verification with -c. Seed 1234 was used throughout; explicit lengths fix these workloads independently of the seed.
+First run without -c and calculate the response and turnaround times:
 
-All jobs arrive at time zero, have known CPU lengths, and do no I/O. There is no context-switch cost. Times are simulator units. These assumptions limit the conclusions to this simple model.
-
-## Reproduce
-
-From the repository root, first predict without the computed flag:
-
-~~~bash
+```bash
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p FIFO -s 1234
-~~~
+```
 
-Then check the trace and metrics:
+Then add -c to check the result:
 
-~~~bash
+```bash
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p FIFO -s 1234 -c
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p RR -q 1 -s 1234 -c
-~~~
+```
 
-To print all 28 verification runs from the saved command list:
+The saved command list can also be used to repeat all 28 examples:
 
-~~~bash
+```bash
 python3 - <<'PY'
 import json
 import subprocess
 with open('hw/chapter7/data/run-manifest.json') as f:
-    manifest = json.load(f)
-for case in manifest['cases']:
+    cases = json.load(f)['cases']
+for case in cases:
     subprocess.run(case['command'], check=True)
 PY
-~~~
-
-The saved output files remain unchanged by these reproduction commands.
+```
