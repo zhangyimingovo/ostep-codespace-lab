@@ -1,87 +1,87 @@
-# Chapter 7: Scheduling — Introduction
+# 第 7 章：调度入门
 
-## Setup
+## 基本条件
 
-All jobs arrive at time 0 and have known CPU lengths. There is no I/O or switching cost. Job IDs start at 0 and follow the input order. Jobs of equal length keep that order. Times are in simulator units.
+所有任务都在时间 0 到达，运行长度已知。没有 I/O 和切换开销。任务编号从 0 开始，按输入顺序排列。长度相同的任务保持原顺序。时间均使用模拟器的单位。
 
-- Response = first start − arrival.
-- Turnaround = completion − arrival.
-- Wait = turnaround − CPU length.
+- 响应时间 = 第一次开始时间 − 到达时间。
+- 周转时间 = 完成时间 − 到达时间。
+- 等待时间 = 周转时间 − 任务运行长度。
 
-The calculations are below. The simulator results and explanations follow in the next section.
+下面先计算结果，下一部分再核对模拟结果并讨论。
 
-## Q1 — Three jobs of length 200
+## Q1 — 三个长度为 200 的任务
 
-**Prediction.** FIFO and SJF both use order 0, 1, 2. Their intervals are 0–200, 200–400, 400–600.
+**预测。** FIFO 和 SJF 的顺序都是 0、1、2，运行区间为 0–200、200–400、400–600。
 
-| Policy | Job | Response | Turnaround | Wait |
+| 策略 | 任务 | 响应时间 | 周转时间 | 等待时间 |
 | --- | --- | ---: | ---: | ---: |
 | FIFO / SJF | 0 | 0 | 200 | 0 |
 | FIFO / SJF | 1 | 200 | 400 | 200 |
 | FIFO / SJF | 2 | 400 | 600 | 400 |
-| FIFO / SJF | Average | 200.00 | 400.00 | 200.00 |
+| FIFO / SJF | 平均 | 200.00 | 400.00 | 200.00 |
 
-Average response is (0 + 200 + 400)/3 = 200. Average turnaround is (200 + 400 + 600)/3 = 400.
+平均响应时间为 (0 + 200 + 400)/3 = 200，平均周转时间为 (200 + 400 + 600)/3 = 400。
 
-## Q2 — Lengths 100, 200, 300
+## Q2 — 长度为 100、200、300 的任务
 
-**Prediction.** The input is already sorted, so FIFO and SJF both use order 0, 1, 2. Their intervals are 0–100, 100–300, 300–600.
+**预测。** 输入已经按长度排序，所以 FIFO 和 SJF 的顺序都是 0、1、2，运行区间为 0–100、100–300、300–600。
 
-| Policy | Job | Response | Turnaround | Wait |
+| 策略 | 任务 | 响应时间 | 周转时间 | 等待时间 |
 | --- | --- | ---: | ---: | ---: |
 | FIFO / SJF | 0 | 0 | 100 | 0 |
 | FIFO / SJF | 1 | 100 | 300 | 100 |
 | FIFO / SJF | 2 | 300 | 600 | 300 |
-| FIFO / SJF | Average | 133.33 | 333.33 | 133.33 |
+| FIFO / SJF | 平均 | 133.33 | 333.33 | 133.33 |
 
-Exact average response and wait are 400/3. Exact average turnaround is 1000/3.
+平均响应时间和平均等待时间的精确值都是 400/3，平均周转时间的精确值为 1000/3。
 
-## Q3 — Round Robin, quantum 1
+## Q3 — 时间片为 1 的 RR
 
-Both Q1 and Q2 workloads are checked with RR.
+分别对 Q1 和 Q2 的任务使用 RR。
 
-**Prediction: 200,200,200.** First starts are 0, 1, 2. After 199 full rounds, time is 597; each job has one unit left. The final slices finish at 598, 599, 600.
+**预测：200,200,200。** 第一次开始时间为 0、1、2。运行 199 个完整轮次后，时间为 597，每个任务还剩一个时间单位。最后一次运行后，三个任务分别在 598、599、600 完成。
 
-| Job | Response | Turnaround | Wait |
+| 任务 | 响应时间 | 周转时间 | 等待时间 |
 | --- | ---: | ---: | ---: |
 | 0 | 0 | 598 | 398 |
 | 1 | 1 | 599 | 399 |
 | 2 | 2 | 600 | 400 |
-| Average | 1.00 | 599.00 | 399.00 |
+| 平均 | 1.00 | 599.00 | 399.00 |
 
-**Prediction: 100,200,300.** After 99 rounds, time is 297. Job 0 finishes at 298; the other two reach 100 units of service by time 300. After another 99 two-job rounds, time is 498. Job 1 finishes at 499, job 2 takes a slice through 500, then runs alone to 600.
+**预测：100,200,300。** 运行 99 轮后，时间为 297。任务 0 在 298 完成；到时间 300 时，另外两个任务都已运行 100 个时间单位。剩下两个任务再运行 99 轮，时间到 498。任务 1 在 499 完成，任务 2 接着运行到 500，之后单独运行到 600。
 
-| Job | Response | Turnaround | Wait |
+| 任务 | 响应时间 | 周转时间 | 等待时间 |
 | --- | ---: | ---: | ---: |
 | 0 | 0 | 298 | 198 |
 | 1 | 1 | 499 | 299 |
 | 2 | 2 | 600 | 300 |
-| Average | 1.00 | 465.67 | 265.67 |
+| 平均 | 1.00 | 465.67 | 265.67 |
 
-The unequal-job means are exactly 1397/3 for turnaround and 797/3 for wait. RR improves first response but increases average turnaround compared with Q1/Q2 FIFO and SJF.
+不同长度任务的平均周转时间精确值为 1397/3，平均等待时间为 797/3。与 Q1、Q2 中的 FIFO 和 SJF 相比，RR 的第一次响应更快，但平均周转时间更长。
 
-## Q4 — Equal turnaround under SJF and FIFO
+## Q4 — SJF 和 FIFO 的周转时间何时相同
 
-**Prediction.** The averages match when FIFO already lists the jobs from shortest to longest. Equal-length jobs also work. If a longer job of length a comes just before a shorter job of length b, swapping them reduces total turnaround by a − b. For positive lengths, any such pair makes FIFO worse than SJF.
+**预测。** FIFO 已经按任务长度从小到大排列时，两者的平均周转时间相同。任务长度都相等时也一样。如果长度为 a 的长任务紧挨着排在长度为 b 的短任务前面，交换它们会使总周转时间减少 a − b。因此，任务长度都为正时，只要有这种长任务在前的情况，FIFO 的平均周转时间就会比 SJF 更长。
 
-The tables use the original job IDs. Equal-length jobs keep their order here. Swapping them can change individual finish times but leaves the average unchanged.
+表格按原任务编号列出结果。这里长度相同的任务保持原顺序；交换它们可能改变各自的完成时间，但不会改变平均值。
 
-| Lengths | Policy | Responses by job | Turnarounds by job | Avg response | Avg turnaround |
+| 任务长度 | 策略 | 各任务响应时间 | 各任务周转时间 | 平均响应时间 | 平均周转时间 |
 | --- | --- | --- | --- | ---: | ---: |
 | 20,20,20 | FIFO / SJF | 0,20,40 | 20,40,60 | 20.00 | 40.00 |
 | 10,10,100 | FIFO / SJF | 0,10,20 | 10,20,120 | 10.00 | 50.00 |
 | 100,10,10 | FIFO | 0,100,110 | 100,110,120 | 70.00 | 110.00 |
 | 100,10,10 | SJF | 20,0,10 | 120,10,20 | 10.00 | 50.00 |
 
-The final pair shows the convoy effect: short jobs wait behind the long job under FIFO.
+最后两行体现了护航效应：FIFO 下，短任务要等前面的长任务运行完。
 
-## Q5 — Equal response under SJF and RR
+## Q5 — SJF 和 RR 的响应时间何时相同
 
-**Prediction.** One way to get the same response for every job is to list the RR queue in shortest-job order and make q long enough for every job before the last one to finish in one turn. The final job can be longer than q because the other jobs have already finished. For equal-length jobs, q at least that length works. A single job always has response 0.
+**预测。** 一种让每个任务的响应时间都相同的方法是：RR 队列按任务长度从小到大排列，且 q 足够让最后一个任务之前的所有任务都在一个时间片内完成。最后一个任务可以长于 q，因为其他任务都已经完成。任务长度相同时，q 不小于该长度即可。只有一个任务时，响应时间始终为 0。
 
-For 10,20,40, q=20 is sufficient, even though 40 exceeds q. With q=5, jobs 1 and 2 respond sooner.
+对于 10,20,40，q=20 已经足够，即使 40 大于 q。q=5 时，任务 1 和 2 会更早得到响应。
 
-| Lengths | Policy | Responses by job | Turnarounds by job | Avg response | Avg turnaround |
+| 任务长度 | 策略 | 各任务响应时间 | 各任务周转时间 | 平均响应时间 | 平均周转时间 |
 | --- | --- | --- | --- | ---: | ---: |
 | 10,20,40 | SJF | 0,10,30 | 10,30,70 | 13.33 | 36.67 |
 | 10,20,40 | RR q=20 | 0,10,30 | 10,30,70 | 13.33 | 36.67 |
@@ -89,34 +89,34 @@ For 10,20,40, q=20 is sufficient, even though 40 exceeds q. With q=5, jobs 1 and
 | 30,10,20 | SJF | 30,0,10 | 60,10,30 | 13.33 | 33.33 |
 | 30,10,20 | RR q=15 | 0,15,25 | 55,25,60 | 13.33 | 46.67 |
 
-The last two rows have the same average response, but the individual responses differ. The averages can match even when the schedules do not.
+最后两行的平均响应时间相同，但各任务的响应时间不同。因此，平均值相同不代表调度过程相同。
 
-## Q6 — SJF as job lengths increase
+## Q6 — 任务变长时，SJF 的响应时间如何变化
 
-**Prediction.** For three equal jobs of length L, responses are 0,L,2L, so the mean is L. Completions are L,2L,3L, so mean turnaround is 2L. Doubling all lengths doubles the response times.
+**预测。** 三个任务的长度都为 L 时，响应时间为 0,L,2L，平均值为 L；完成时间为 L,2L,3L，平均周转时间为 2L。所有任务长度翻倍时，响应时间也会翻倍。
 
-| Lengths | SJF responses | SJF turnarounds | Avg response | Avg turnaround |
+| 任务长度 | SJF 响应时间 | SJF 周转时间 | 平均响应时间 | 平均周转时间 |
 | --- | --- | --- | ---: | ---: |
 | 10,10,10 | 0,10,20 | 10,20,30 | 10.00 | 20.00 |
 | 20,20,20 | 0,20,40 | 20,40,60 | 20.00 | 40.00 |
 | 40,40,40 | 0,40,80 | 40,80,120 | 40.00 | 80.00 |
 | 10,10,40 | 0,10,20 | 10,20,60 | 10.00 | 30.00 |
 
-Response depends on earlier jobs. Extending only the last job need not change any first-start time, as the first and last rows show.
+响应时间取决于前面的任务。对比第一行和最后一行，只增加最后一个任务的长度，不会改变任何任务第一次开始的时间。
 
-## Q7 — RR as the quantum increases
+## Q7 — RR 的时间片增大时会怎样
 
-**Prediction.** Job IDs start at 0. Job j first runs after each earlier job takes one turn:
+**预测。** 任务编号从 0 开始。任务 j 要等前面的每个任务各运行一次后，才会第一次运行：
 
 R_j = sum(i < j) min(L_i, q).
 
-Each earlier job runs for at most q, so R_j <= j*q. With N jobs, worst response is at most (N−1)*q. This value is reached when all N−1 earlier jobs are at least q long. Average response is at most q*(N−1)/2.
+前面的每个任务最多运行 q，因此 R_j <= j*q。N 个任务中，最长响应时间不超过 (N−1)*q。前面的 N−1 个任务都至少有 q 长时，会达到这个值。平均响应时间不超过 q*(N−1)/2。
 
-This assumes all jobs are ready at time 0, with no I/O, new arrivals, or switching cost. It describes the first run of each job.
+这里假设所有任务都在时间 0 就绪，没有 I/O、新任务到达或切换开销，讨论的是各任务第一次运行的时间。
 
-For three length-200 jobs, mean response is min(q,200). It rises with q, then stays at 200. When q divides 200 and q <= 200, final completions are 600−2q,600−q,600, so mean turnaround is 600−q. For q >= 200, RR runs each job to completion and behaves like FIFO.
+三个任务的长度都为 200 时，平均响应时间为 min(q,200)。它随 q 增大，达到 200 后不再增加。当 q 能整除 200 且 q <= 200 时，完成时间为 600−2q,600−q,600，因此平均周转时间为 600−q。q >= 200 时，RR 会一次运行完每个任务，效果与 FIFO 相同。
 
-| RR q | Responses | Turnarounds | Avg response | Avg turnaround |
+| RR q | 响应时间 | 周转时间 | 平均响应时间 | 平均周转时间 |
 | ---: | --- | --- | ---: | ---: |
 | 1 | 0,1,2 | 598,599,600 | 1.00 | 599.00 |
 | 5 | 0,5,10 | 590,595,600 | 5.00 | 595.00 |
@@ -125,55 +125,55 @@ For three length-200 jobs, mean response is min(q,200). It rises with q, then st
 | 100 | 0,100,200 | 400,500,600 | 100.00 | 500.00 |
 | 300 | 0,200,400 | 200,400,600 | 200.00 | 400.00 |
 
-For N=5, lengths 1000,1000,1000,1000,1000 and q=7, responses are 0,7,14,21,28. Worst response is (5−1)*7=28 and the mean is 14. After 142 full rounds, time is 4970; each job has 6 units left. Completions are 4976,4982,4988,4994,5000 and the mean is 4988.
+N=5，任务长度为 1000,1000,1000,1000,1000，q=7 时，响应时间为 0,7,14,21,28。最长响应时间为 (5−1)*7=28，平均值为 14。运行 142 个完整轮次后，时间为 4970，每个任务还剩 6 个时间单位。完成时间为 4976,4982,4988,4994,5000，平均值为 4988。
 
-# Verification and discussion
+# 验证与讨论
 
-The results match the calculations above. All jobs arrive at time 0, and the simulator has no I/O or switching cost. Job IDs start at 0. Response time is how long a job waits before its first run. Turnaround time is how long it takes to finish. Total wait time is turnaround minus the job's length.
+模拟结果与上面的计算一致。所有任务都在时间 0 到达，没有 I/O 和切换开销，任务编号从 0 开始。响应时间是任务第一次运行前等了多久，周转时间是任务从到达到完成用了多久，等待时间则是周转时间减去任务运行长度。
 
-The runs use seed 1234. The full output is in [data/](data/), and the commands are in [run-manifest.json](data/run-manifest.json). The simulator rounds to two decimal places, so 400/3 is shown as 133.33.
+运行使用的随机种子为 1234。完整输出保存在 [data/](data/)，命令列在 [run-manifest.json](data/run-manifest.json) 中。模拟器保留两位小数，所以 400/3 显示为 133.33。
 
-## Q1: Three jobs of length 200
+## Q1：三个长度为 200 的任务
 
-FIFO and SJF give the same result. All three jobs have the same length, so both run job 0, then job 1, then job 2. Their response times are 0, 200, and 400. They finish at 200, 400, and 600.
+FIFO 和 SJF 的结果相同。三个任务长度一样，两种策略都先运行任务 0，再运行任务 1 和 2。响应时间分别为 0、200、400，完成时间分别为 200、400、600。
 
-The averages are 200.00 for response, 400.00 for turnaround, and 200.00 for wait, as calculated above.
+平均响应时间为 200.00，平均周转时间为 400.00，平均等待时间为 200.00，与上面的计算一致。
 
-## Q2: Lengths 100, 200, and 300
+## Q2：长度为 100、200、300 的任务
 
-The jobs are already listed from shortest to longest. SJF therefore runs them in the same order as FIFO. Their response times are 0, 100, and 300, and they finish at 100, 300, and 600.
+任务已经按长度从小到大排列，因此 SJF 和 FIFO 的运行顺序相同。响应时间分别为 0、100、300，完成时间分别为 100、300、600。
 
-Both policies give average response 133.33, average turnaround 333.33, and average wait 133.33. SJF does not improve this example because FIFO already puts the short jobs first.
+两种策略的平均响应时间都是 133.33，平均周转时间为 333.33，平均等待时间为 133.33。这个例子中，FIFO 已经先运行短任务，所以 SJF 没有进一步缩短时间。
 
-## Q3: RR with quantum 1
+## Q3：时间片为 1 的 RR
 
-With a quantum of 1, the jobs first run at 0, 1, and 2. Both workloads have average response 1.00.
+时间片为 1 时，任务第一次运行的时间为 0、1、2。两组任务的平均响应时间都是 1.00。
 
-| Lengths | Finish times by job ID | Avg response | Avg turnaround | Avg wait |
+| 任务长度 | 按任务编号列出的完成时间 | 平均响应时间 | 平均周转时间 | 平均等待时间 |
 |---|---|---:|---:|---:|
 | 200,200,200 | 598,599,600 | 1.00 | 599.00 | 399.00 |
 | 100,200,300 | 298,499,600 | 1.00 | 465.67 | 265.67 |
 
-RR lets every job start sooner, but each job has to wait between turns. Average turnaround goes from 400 to 599 for the equal jobs, and from 333.33 to 465.67 for the unequal jobs. Both workloads still take 600 time units to finish all the work.
+RR 让后面的任务更早开始，但任务在两次运行之间还要等待。长度相同的任务，平均周转时间从 400 增加到 599；长度不同的任务，从 333.33 增加到 465.67。两组任务完成全部工作都需要 600 个时间单位。
 
-## Q4: When do FIFO and SJF have the same turnaround?
+## Q4：FIFO 和 SJF 的周转时间何时相同？
 
-| Lengths | Policy | Avg response | Avg turnaround | Avg wait |
+| 任务长度 | 策略 | 平均响应时间 | 平均周转时间 | 平均等待时间 |
 |---|---|---:|---:|---:|
 | 20,20,20 | FIFO / SJF | 20.00 | 40.00 | 20.00 |
 | 10,10,100 | FIFO / SJF | 10.00 | 50.00 | 10.00 |
 | 100,10,10 | FIFO | 70.00 | 110.00 | 70.00 |
 | 100,10,10 | SJF | 10.00 | 50.00 | 10.00 |
 
-They have the same average turnaround when FIFO already lists the jobs from shortest to longest. Equal lengths also work. If a longer job of length a comes just before a shorter job of length b, swapping them reduces total turnaround by a-b. For positive lengths, any such pair makes FIFO's average worse than SJF's. Swapping equal-length jobs leaves the average unchanged, although individual finish times can differ.
+FIFO 已经按长度从小到大排列时，两者的平均周转时间相同。任务长度都相等时也一样。如果长度为 a 的长任务紧挨着排在长度为 b 的短任务前面，交换它们会使总周转时间减少 a-b。任务长度都为正时，只要有这种情况，FIFO 的平均周转时间就会比 SJF 更长。交换相同长度的任务不会改变平均值，但可能改变各任务的完成时间。
 
-The 100,10,10 example shows why the order matters. Under FIFO, both short jobs wait for the long job. SJF finishes the short jobs first, reducing average turnaround from 110 to 50.
+100,10,10 这个例子说明了顺序的影响。FIFO 下，两个短任务都要等长任务完成。SJF 先完成短任务，使平均周转时间从 110 降到 50。
 
-## Q5: When do SJF and RR have the same response?
+## Q5：SJF 和 RR 的响应时间何时相同？
 
-One way to get the same response for every job is to put the RR queue in shortest-job order and choose a quantum long enough for each job before the last one to finish in one turn. Then each next job starts at the same time as in SJF. The final job can be longer than the quantum because the other jobs have already finished.
+一种让每个任务的响应时间都相同的方法是：RR 队列按长度从小到大排列，时间片足够让最后一个任务之前的每个任务都在一个时间片内完成。这样，下一个任务开始的时间就与 SJF 相同。最后一个任务可以长于时间片，因为其他任务都已经完成。
 
-| Lengths | Policy / quantum | Responses by job ID | Avg response | Avg turnaround | Avg wait |
+| 任务长度 | 策略 / 时间片 | 按任务编号列出的响应时间 | 平均响应时间 | 平均周转时间 | 平均等待时间 |
 |---|---|---|---:|---:|---:|
 | 10,20,40 | SJF | 0,10,30 | 13.33 | 36.67 | 13.33 |
 | 10,20,40 | RR / 20 | 0,10,30 | 13.33 | 36.67 | 13.33 |
@@ -181,26 +181,26 @@ One way to get the same response for every job is to put the RR queue in shortes
 | 30,10,20 | SJF | 30,0,10 | 13.33 | 33.33 | 13.33 |
 | 30,10,20 | RR / 15 | 0,15,25 | 13.33 | 46.67 | 26.67 |
 
-For 10,20,40, quantum 20 is enough to match SJF. Quantum 5 starts the jobs sooner but makes them finish later on average.
+对于 10,20,40，时间片为 20 就能得到与 SJF 相同的结果。时间片为 5 时，任务 1 和 2 更早开始，但平均完成时间更晚。
 
-The 30,10,20 example gives the same average response, 13.33, under SJF and RR with quantum 15. However, the response times of individual jobs are different. The averages can match even when the schedules do not.
+对于 30,10,20，SJF 和时间片为 15 的 RR 的平均响应时间都是 13.33，但各任务的响应时间不同。因此，平均值相同不代表调度过程相同。
 
-## Q6: What happens when SJF job lengths increase?
+## Q6：任务变长时，SJF 的响应时间如何变化？
 
-| Lengths | Avg response | Avg turnaround | Avg wait |
+| 任务长度 | 平均响应时间 | 平均周转时间 | 平均等待时间 |
 |---|---:|---:|---:|
 | 10,10,10 | 10.00 | 20.00 | 10.00 |
 | 20,20,20 | 20.00 | 40.00 | 20.00 |
 | 40,40,40 | 40.00 | 80.00 | 40.00 |
 | 10,10,40 | 10.00 | 30.00 | 10.00 |
 
-Longer jobs make later jobs wait longer. For three equal jobs of length L, response times are 0,L,2L, so average response is L. Doubling all job lengths doubles the response times.
+前面的任务变长，会让后面的任务等待更久。三个任务长度都为 L 时，响应时间为 0,L,2L，平均响应时间为 L。所有任务长度翻倍时，响应时间也会翻倍。
 
-For N jobs sorted by length, the average is sum((N-1-i)*L_i)/N. Each job's response depends on the jobs before it. Increasing only the final job from 10 to 40 leaves the first starts unchanged, so average response stays at 10. Its later finish raises average turnaround to 30.
+N 个任务按长度排序时，平均响应时间为 sum((N-1-i)*L_i)/N。每个任务的响应时间取决于前面的任务。只把最后一个任务的长度从 10 增加到 40，各任务第一次开始的时间不变，平均响应时间仍为 10。但最后一个任务更晚完成，使平均周转时间增加到 30。
 
-## Q7: What happens when the RR quantum increases?
+## Q7：RR 的时间片增大时会怎样？
 
-| Lengths | Quantum | Avg response | Avg turnaround | Avg wait |
+| 任务长度 | 时间片 | 平均响应时间 | 平均周转时间 | 平均等待时间 |
 |---|---:|---:|---:|---:|
 | 200,200,200 | 1 | 1.00 | 599.00 | 399.00 |
 | 200,200,200 | 5 | 5.00 | 595.00 | 395.00 |
@@ -210,21 +210,21 @@ For N jobs sorted by length, the average is sum((N-1-i)*L_i)/N. Each job's respo
 | 200,200,200 | 300 | 200.00 | 400.00 | 200.00 |
 | 1000,1000,1000,1000,1000 | 7 | 14.00 | 4988.00 | 3988.00 |
 
-With a larger quantum, later jobs may wait longer for their first turn. For the three length-200 jobs, average response is min(q,200). It rises until q reaches 200, then stays at 200. When every job fits in one turn, RR runs like FIFO.
+时间片变大时，后面的任务可能要等更久才能第一次运行。三个任务长度都为 200 时，平均响应时间为 min(q,200)。它随 q 增大，到 q 达到 200 后保持为 200。每个任务都能在一次轮到时完成时，RR 的运行方式就与 FIFO 相同。
 
-Job j first runs after each earlier job has taken one turn:
+任务 j 要等前面的每个任务各运行一次后，才会第一次运行：
 
 R_j = sum(min(L_i,q), for i < j).
 
-With N jobs ready at time 0, the last job waits for at most N-1 slices. The worst response is therefore at most (N-1)q. This value is reached when every earlier job is at least q long. The average response is at most q(N-1)/2. These bounds assume no new arrivals or switching cost.
+N 个任务都在时间 0 就绪时，最后一个任务最多等待 N-1 个时间片，所以最长响应时间不超过 (N-1)q。前面的每个任务都至少有 q 长时，会达到这个值。平均响应时间不超过 q(N-1)/2。这里假设没有新任务到达和切换开销。
 
-For the equal length-200 jobs, average turnaround is 600-q when q divides 200 and q <= 200. If q does not divide the length, the last turn is shorter. For N equal jobs of length L, let k=ceil(L/q) and r=L-(k-1)q. Here r is the length of the final turn. Job j finishes at N(k-1)q+(j+1)r, so average turnaround is NL-(N-1)r/2. When q divides L, r=q; when q >= L, r=L and the average is L(N+1)/2.
+三个任务长度都为 200，q 能整除 200 且 q <= 200 时，平均周转时间为 600-q。如果 q 不能整除任务长度，最后一次运行会短一些。N 个任务长度都为 L 时，令 k=ceil(L/q)，r=L-(k-1)q，其中 r 是最后一次运行的长度。任务 j 的完成时间为 N(k-1)q+(j+1)r，因此平均周转时间为 NL-(N-1)r/2。q 能整除 L 时，r=q；q >= L 时，r=L，平均周转时间为 L(N+1)/2。
 
-For five length-1000 jobs with q=7, the final turn is 6 time units long. The first starts are 0,7,14,21,28, giving worst response 28 and average response 14. The finish times are 4976,4982,4988,4994,5000, with average turnaround 4988. This agrees with the calculation using the shorter final turn.
+五个长度为 1000 的任务使用 q=7 时，最后一次运行的长度为 6。第一次开始时间为 0,7,14,21,28，最长响应时间为 28，平均响应时间为 14。完成时间为 4976,4982,4988,4994,5000，平均周转时间为 4988，与考虑最后一次运行较短时的计算一致。
 
-## Output index
+## 原始输出索引
 
-| Case | Policy | Lengths | Quantum | Avg response | Avg turnaround | Avg wait | Raw output |
+| 案例 | 策略 | 任务长度 | 时间片 | 平均响应时间 | 平均周转时间 | 平均等待时间 | 原始输出 |
 |---|---|---|---:|---:|---:|---:|---|
 | q1_fifo | FIFO | 200,200,200 | - | 200.00 | 400.00 | 200.00 | [q1_fifo.txt](data/q1_fifo.txt) |
 | q2_fifo | FIFO | 100,200,300 | - | 133.33 | 333.33 | 133.33 | [q2_fifo.txt](data/q2_fifo.txt) |

@@ -1,36 +1,36 @@
-# Chapter 7: CPU Scheduling
+# 第 7 章：CPU 调度
 
-This exercise compares FIFO, SJF, and Round Robin using the homework questions in [OSTEP Chapter 7](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf).
+本次作业根据 [OSTEP 第 7 章](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf)的习题，比较 FIFO、SJF 和轮转调度（RR）。
 
-The calculations and explanations are in [analysis.md](analysis.md). The 28 simulator outputs are in [data/](data/), and [run-manifest.json](data/run-manifest.json) lists the commands and results.
+计算过程和说明见 [analysis.md](analysis.md)。28 份模拟器输出保存在 [data/](data/)，运行命令和结果列在 [run-manifest.json](data/run-manifest.json) 中。
 
-## Main results
+## 主要结果
 
-- FIFO and SJF give the same result for 200,200,200 and 100,200,300. For 100,10,10, SJF reduces average turnaround from 110 to 50 by running the short jobs first.
-- RR with quantum 1 gives average response 1 for both original workloads. Average turnaround is higher: 599 for equal lengths and 465.67 for unequal lengths.
-- Increasing all job lengths makes response under SJF increase. Increasing only the final job does not change the first starts.
-- A larger RR quantum can increase the wait for the first turn. With N jobs ready at time 0, worst response is at most (N-1)q.
+- 对于 200,200,200 和 100,200,300，FIFO 和 SJF 的结果相同。对于 100,10,10，SJF 先运行短任务，使平均周转时间从 110 降到 50。
+- 时间片为 1 时，两组任务在 RR 下的平均响应时间都是 1，但平均周转时间更长：相同长度为 599，不同长度为 465.67。
+- 所有任务都变长时，SJF 的响应时间也会增加。只增加最后一个任务的长度，不会改变各任务第一次开始的时间。
+- RR 的时间片越大，后面的任务可能需要等更久才能第一次运行。N 个任务都在时间 0 就绪时，最长响应时间不超过 (N-1)q。
 
-The simulator results agree with the calculations. All jobs arrive at time 0, and there is no I/O or switching cost. Times are in simulator units.
+模拟结果与计算一致。所有任务都在时间 0 到达，没有 I/O 和切换开销。时间均使用模拟器的单位。
 
-## Running the examples
+## 运行示例
 
-The examples use Python 3.12.3 in GitHub Codespaces. Run these commands from the repository root. Seed 1234 is used throughout.
+示例在 GitHub Codespaces 中使用 Python 3.12.3。以下命令从仓库根目录运行，随机种子统一为 1234。
 
-First run without -c and calculate the response and turnaround times:
+先不加 -c，计算响应时间和周转时间：
 
 ```bash
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p FIFO -s 1234
 ```
 
-Then add -c to check the result:
+再加上 -c 核对结果：
 
 ```bash
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p FIFO -s 1234 -c
 python3 ext/ostep-homework/cpu-sched/scheduler.py -l 100,200,300 -p RR -q 1 -s 1234 -c
 ```
 
-The saved command list can also be used to repeat all 28 examples:
+也可以根据保存的命令列表，重新运行全部 28 个例子：
 
 ```bash
 python3 - <<'PY'
