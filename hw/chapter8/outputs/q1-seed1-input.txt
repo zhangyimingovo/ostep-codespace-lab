@@ -1,0 +1,30 @@
+$ python3 ext/ostep-homework/cpu-sched-mlfq/mlfq.py -n 2 -j 2 -m 20 -M 0 -q 3 -s 1
+Here is the list of inputs:
+OPTIONS jobs 2
+OPTIONS queues 2
+OPTIONS allotments for queue  1 is   1
+OPTIONS quantum length for queue  1 is   3
+OPTIONS allotments for queue  0 is   1
+OPTIONS quantum length for queue  0 is   3
+OPTIONS boost 0
+OPTIONS ioTime 5
+OPTIONS stayAfterIO False
+OPTIONS iobump False
+
+
+For each job, three defining characteristics are given:
+  startTime : at what time does the job enter the system
+  runTime   : the total CPU time needed by the job to finish
+  ioFreq    : every ioFreq time units, the job issues an I/O
+              (the I/O takes ioTime units to complete)
+
+Job List:
+  Job  0: startTime   0 - runTime   3 - ioFreq   0
+  Job  1: startTime   0 - runTime  15 - ioFreq   0
+
+Compute the execution trace for the given workloads.
+If you would like, also compute the response and turnaround
+times for each of the jobs.
+
+Use the -c flag to get the exact results when you are finished.
+

@@ -1,0 +1,27 @@
+$ python3 ext/ostep-homework/cpu-sched-lottery/lottery.py -j 3 -s 1
+ARG jlist 
+ARG jobs 3
+ARG maxlen 10
+ARG maxticket 100
+ARG quantum 1
+ARG seed 1
+
+Here is the job list, with the run time of each job: 
+  Job 0 ( length = 1, tickets = 84 )
+  Job 1 ( length = 7, tickets = 25 )
+  Job 2 ( length = 4, tickets = 44 )
+
+
+Here is the set of random numbers you will need (at most):
+Random 651593
+Random 788724
+Random 93859
+Random 28347
+Random 835765
+Random 432767
+Random 762280
+Random 2106
+Random 445387
+Random 721540
+Random 228762
+Random 945271
